@@ -1,6 +1,7 @@
-package org.summer.boot.web;
+package org.summer.boot;
 
 import org.summer.boot.annotations.WebApplication;
+import org.summer.boot.web.NettyServer;
 
 @WebApplication
 public class Application {

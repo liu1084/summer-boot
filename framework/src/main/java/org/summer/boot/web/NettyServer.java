@@ -30,6 +30,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 public final class NettyServer {
     private final PluginManager pluginManager;
@@ -119,6 +120,8 @@ public final class NettyServer {
             scanBasePackages = basePackage;
         }
 
+        //merge
+        scanBasePackages = Stream.concat(Stream.of(scanBasePackages), Stream.of(basePackage)).toArray(String[]::new);
         // Initialize ConfigBinder and bind configurations
         ConfigBinder configBinder = new ConfigBinder();
         configBinder.bindConfigurations(scanBasePackages);
