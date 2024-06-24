@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 import org.summer.boot.annotations.ConfigurationProperties;
+import org.summer.boot.annotations.EnableAutoConfiguration;
 
 @ConfigurationProperties(prefix = "server")
 @Getter
@@ -21,4 +22,7 @@ public class ServerProperties {
 
     @JsonProperty("maxContentLength")
     private int maxContentLength = 65536; // 默认最大内容长度
+
+    @JsonProperty("isDebug")
+    private boolean isDebug = false;
 }

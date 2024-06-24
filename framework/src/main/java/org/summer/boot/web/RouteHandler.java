@@ -24,13 +24,13 @@ public class RouteHandler {
 
     private final Injector injector;
 
-    public RouteHandler(Injector injector, String[] basePackages) {
+    public RouteHandler(Injector injector, Set<String> basePackages) {
         this.injector = injector;
         scanForControllers(basePackages);
     }
 
-    private void scanForControllers(String[] basePackages) {
-        Arrays.stream(basePackages).distinct().forEach(basePackage -> {
+    private void scanForControllers(Set<String> basePackages) {
+        basePackages.parallelStream().distinct().forEach(basePackage -> {
             Reflections reflections = new Reflections(basePackage);
             Set<Class<?>> controllerClasses = reflections.getTypesAnnotatedWith(Controller.class);
 

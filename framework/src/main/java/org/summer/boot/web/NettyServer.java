@@ -14,8 +14,9 @@ import io.netty.handler.codec.http.HttpServerCodec;
 import org.reflections.Reflections;
 import org.summer.boot.annotations.*;
 import org.summer.boot.config.AutoConfigurationLoader;
-import org.summer.boot.config.ConfigBinder;
+import org.summer.boot.config.ConfigurationManager;
 import org.summer.boot.config.ServerProperties;
+import org.summer.boot.constants.Constant;
 import org.summer.boot.filter.FilterInterface;
 import org.summer.boot.filter.FilterManager;
 import org.summer.boot.inject.ApplicationModule;
@@ -25,10 +26,7 @@ import org.summer.boot.plugin.PluginInterface;
 import org.summer.boot.plugin.PluginManager;
 
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -36,9 +34,10 @@ public final class NettyServer {
     private final PluginManager pluginManager;
     private final InterceptorManager interceptorManager;
     private final FilterManager filterManager;
-    static Injector injector;
-    static String[] scanBasePackages;
+    private static Injector injector;
+    static Set<String> basePackages;
     private int port;
+
 
     public NettyServer(PluginManager pluginManager, InterceptorManager interceptorManager, FilterManager filterManager) {
         this.pluginManager = pluginManager;
@@ -47,17 +46,13 @@ public final class NettyServer {
     }
 
     public void start() throws Exception {
-        // 加载自动配置
-        AutoConfigurationLoader.loadConfigurations();
         // 扫描并注册插件、拦截器和过滤器
         scanAndRegisterComponents(Plugin.class, PluginInterface.class, pluginManager::registerPlugin);
         scanAndRegisterComponents(Interceptor.class, InterceptorInterface.class, interceptorManager::addInterceptor);
         scanAndRegisterComponents(Filter.class, FilterInterface.class, filterManager::addFilter);
 
-        Injector injector = Guice.createInjector(new ApplicationModule(scanBasePackages));
-
         // 初始化路由处理器和路由扫描器
-        RouteHandler routeHandler = new RouteHandler(injector, scanBasePackages);
+        RouteHandler routeHandler = new RouteHandler(injector, basePackages);
 
         // 启动Netty服务器
         ServerBootstrap bootstrap = new ServerBootstrap();
@@ -93,7 +88,7 @@ public final class NettyServer {
     }
 
     private <A extends Annotation, T> void scanAndRegisterComponents(Class<A> annotation, Class<T> targetType, Consumer<T> registryFunction) {
-        for (String basePackage : scanBasePackages) {
+        basePackages.parallelStream().forEach(basePackage -> {
             Reflections reflections = new Reflections(basePackage);
             Set<Class<?>> annotatedClasses = reflections.getTypesAnnotatedWith(annotation);
 
@@ -107,24 +102,27 @@ public final class NettyServer {
                 T instance = targetType.cast(injector.getInstance(clazz));
                 registryFunction.accept(instance);
             }
-        }
+        });
     }
 
 
     public static void run(Class<?> mainClass, String[] args) throws Exception {
-        String[] basePackage = {mainClass.getPackage().getName()};
+        basePackages = new HashSet<>(Arrays.asList(Constant.BASE_PACKAGES));
+        String mainClassPackage = mainClass.getPackage().getName();
+        basePackages.add(mainClassPackage);
+
         WebApplication webApplication = mainClass.getAnnotation(WebApplication.class);
         if (webApplication != null) {
-            scanBasePackages = webApplication.scanBasePackages();
-        } else {
-            scanBasePackages = basePackage;
+            basePackages.addAll(Arrays.asList(webApplication.getScanBasePackages()));
         }
 
-        //merge
-        scanBasePackages = Stream.concat(Stream.of(scanBasePackages), Stream.of(basePackage)).toArray(String[]::new);
+        injector = Guice.createInjector(new ApplicationModule(basePackages));
+
         // Initialize ConfigBinder and bind configurations
-        ConfigBinder configBinder = new ConfigBinder();
-        configBinder.bindConfigurations(scanBasePackages);
+        ConfigurationManager.loadProperties();
+
+        AutoConfigurationLoader autoConfigurationLoader = new AutoConfigurationLoader(basePackages, injector);
+        autoConfigurationLoader.loadAutoConfigurations();
 
         PluginManager pluginManager = new PluginManager();
         InterceptorManager interceptorManager = new InterceptorManager();

@@ -11,9 +11,9 @@ import java.util.Set;
 
 public class ApplicationModule extends AbstractModule {
 
-    private final String[] basePackages;
+    private final Set<String> basePackages;
 
-    public ApplicationModule(String[] basePackages) {
+    public ApplicationModule(Set<String> basePackages) {
         this.basePackages = basePackages;
     }
 

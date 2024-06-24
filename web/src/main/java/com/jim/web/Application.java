@@ -1,4 +1,4 @@
-package org.summer.boot;
+package com.jim.web;
 
 import org.summer.boot.annotations.WebApplication;
 import org.summer.boot.web.NettyServer;
