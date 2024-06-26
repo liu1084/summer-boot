@@ -35,7 +35,7 @@ public final class NettyServer {
     private final InterceptorManager interceptorManager;
     private final FilterManager filterManager;
     private static Injector injector;
-    static Set<String> basePackages;
+    private static Set<String> basePackages;
     private int port;
 
 
@@ -119,7 +119,7 @@ public final class NettyServer {
         injector = Guice.createInjector(new ApplicationModule(basePackages));
 
         // Initialize ConfigBinder and bind configurations
-        ConfigurationManager.loadProperties();
+        ConfigurationManager.loadProperties(mainClass);
 
         AutoConfigurationLoader autoConfigurationLoader = new AutoConfigurationLoader(basePackages, injector);
         autoConfigurationLoader.loadAutoConfigurations();

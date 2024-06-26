@@ -1,9 +1,7 @@
-app:
+env:
     profiles:
         active: prod
-    isDebug: true
-
---- # dev
+isDebug: true
 server:
     port: 8080
     bossGroupThreads: 1
@@ -17,18 +15,3 @@ redis:
 thread:
     pool: 10
     profiles: dev
-
---- # prod
-server:
-    port: 80
-    bossGroupThreads: 1
-    workerGroupThreads: 10
-    maxContentLength: 65535
-database:
-    url: jdbc:mysql://localhost/prod_db
-redis:
-    database: 0
-    port: 6379
-thread:
-    pool: 20
-    profiles: prod
