@@ -18,10 +18,8 @@ import static org.summer.boot.constants.Constant.DEFAULT_CONFIGURATION_FILE;
 
 public class ConfigurationManager {
     private static final Logger logger = LoggerFactory.getLogger(ConfigurationManager.class);
-    private static Map<String, Object> configurations = new HashMap<>();
+    private static ServerProperties serverProperties;
     private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-    private static String activeProfile;
-    private static boolean isDebug;
 
     static {
         mapper.findAndRegisterModules();
@@ -38,8 +36,7 @@ public class ConfigurationManager {
     private static void loadDefaultConfiguration(Class<?> mainClass) throws IOException {
         logger.debug("load config file {}", DEFAULT_CONFIGURATION_FILE);
         try (InputStream fileInputStream = mainClass.getClassLoader().getResourceAsStream(DEFAULT_CONFIGURATION_FILE);) {
-            ServerProperties serverProperties = mapper.readValue(fileInputStream, ServerProperties.class);
-
+            serverProperties = mapper.readValue(fileInputStream, ServerProperties.class);
         }catch (FileNotFoundException e1) {
             logger.error("file {} not exist", DEFAULT_CONFIGURATION_FILE);
             e1.printStackTrace();
@@ -50,7 +47,7 @@ public class ConfigurationManager {
 
     public static <T> T getConfiguration(Class<T> configClass) {
         try {
-            String json = mapper.writeValueAsString(configurations);
+            String json = mapper.writeValueAsString(serverProperties);
             return mapper.readValue(json, configClass);
         } catch (IOException e) {
             throw new RuntimeException("Failed to bind configuration", e);

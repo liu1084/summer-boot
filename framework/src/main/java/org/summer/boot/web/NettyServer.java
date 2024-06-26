@@ -58,8 +58,8 @@ public final class NettyServer {
         ServerBootstrap bootstrap = new ServerBootstrap();
         ServerProperties serverProperties = injector.getInstance(ServerProperties.class);
 
-        int bossThreads = serverProperties.getBossGroupThreads();
-        int workerThreads = serverProperties.getWorkerGroupThreads();
+        int bossThreads = serverProperties.getServer().getBossGroupThreads();
+        int workerThreads = serverProperties.getServer().getWorkerGroupThreads();
         EventLoopGroup bossGroup = new NioEventLoopGroup(bossThreads);
         EventLoopGroup workerGroup = new NioEventLoopGroup(workerThreads);
 
@@ -69,7 +69,7 @@ public final class NettyServer {
                 protected void initChannel(SocketChannel ch) throws Exception {
                     ChannelPipeline pipeline = ch.pipeline();
                     pipeline.addLast(new HttpServerCodec());
-                    pipeline.addLast(new HttpObjectAggregator(serverProperties.getMaxContentLength()));
+                    pipeline.addLast(new HttpObjectAggregator(serverProperties.getServer().getMaxContentLength()));
                     ch.pipeline().addLast(new SimpleChannelInboundHandler<FullHttpRequest>() {
                         @Override
                         protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
@@ -79,7 +79,7 @@ public final class NettyServer {
                     });
                 }
             });
-            port = serverProperties.getPort();
+            port = serverProperties.getServer().getPort();
             bootstrap.bind(port).sync().channel().closeFuture().sync();
         } finally {
             bossGroup.shutdownGracefully();
@@ -118,14 +118,16 @@ public final class NettyServer {
 
         injector = Guice.createInjector(new ApplicationModule(basePackages));
 
-        // Initialize ConfigBinder and bind configurations
+        // 初始化服务配置
         ConfigurationManager.loadProperties(mainClass);
-
+        // 加载自动配置的类
         AutoConfigurationLoader autoConfigurationLoader = new AutoConfigurationLoader(basePackages, injector);
         autoConfigurationLoader.loadAutoConfigurations();
-
+        // 插件管理器
         PluginManager pluginManager = new PluginManager();
+        // 拦截器管理器
         InterceptorManager interceptorManager = new InterceptorManager();
+        // 过滤器管理器
         FilterManager filterManager = new FilterManager();
 
         NettyServer nettyServer = new NettyServer(pluginManager, interceptorManager, filterManager);

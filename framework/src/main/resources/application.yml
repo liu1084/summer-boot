@@ -1,5 +1,5 @@
 env:
-    profiles:
+    profile:
         active: prod
 isDebug: true
 server:
@@ -7,11 +7,4 @@ server:
     bossGroupThreads: 1
     workerGroupThreads: 10
     maxContentLength: 65535
-database:
-    url: jdbc:mysql://localhost/dev_db
-redis:
-    database: 0
-    port: 6379
-thread:
-    pool: 10
-    profiles: dev
+    threadPool: 10
